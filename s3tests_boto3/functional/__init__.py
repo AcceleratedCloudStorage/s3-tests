@@ -101,12 +101,16 @@ def nuke_bucket(client, bucket):
 
     # list and delete objects in batches
     for objects in list_versions(client, bucket, batch_size):
+        if not objects:  # Skip if no objects
+            continue
+            
         delete = client.delete_objects(Bucket=bucket,
-                Delete={'Objects': objects, 'Quiet': True},
+                Delete={'Objects': objects, 'Quiet': False},  # Changed to False for better error reporting
                 BypassGovernanceRetention=True)
 
-        # check for object locks on 403 AccessDenied errors
+        # check for any errors in deletion
         for err in delete.get('Errors', []):
+            print(f'Error deleting object {err.get("Key", "unknown")}: {err.get("Code", "unknown")} - {err.get("Message", "no message")}')
             if err.get('Code') != 'AccessDenied':
                 continue
             try:
@@ -132,9 +136,54 @@ bucket cleanup'.format(bucket, delta.total_seconds()))
             time.sleep(delta.total_seconds())
 
         for objects in list_versions(client, bucket, batch_size):
-            client.delete_objects(Bucket=bucket,
-                    Delete={'Objects': objects, 'Quiet': True},
-                    BypassGovernanceRetention=True)
+            if objects:  # Only delete if there are objects
+                client.delete_objects(Bucket=bucket,
+                        Delete={'Objects': objects, 'Quiet': False},
+                        BypassGovernanceRetention=True)
+
+    # Double-check that bucket is empty before trying to delete it
+    max_cleanup_attempts = 3
+    for attempt in range(max_cleanup_attempts):
+        try:
+            # Try to list any remaining objects (both regular and versions)
+            response = client.list_objects_v2(Bucket=bucket, MaxKeys=100)
+            objects = response.get('Contents', [])
+            
+            # Also check for versioned objects
+            try:
+                versions_response = client.list_object_versions(Bucket=bucket, MaxKeys=100)
+                versions = versions_response.get('Versions', [])
+                delete_markers = versions_response.get('DeleteMarkers', [])
+                all_versions = versions + delete_markers
+            except ClientError:
+                all_versions = []
+            
+            if not objects and not all_versions:
+                break  # Bucket is empty
+                
+            if objects:
+                print(f'Warning: Bucket {bucket} still has {len(objects)} objects after cleanup attempt {attempt + 1}')
+                # Try individual object deletion
+                for obj in objects:
+                    try:
+                        client.delete_object(Bucket=bucket, Key=obj['Key'])
+                        print(f'Manually deleted remaining object: {obj["Key"]}')
+                    except Exception as e:
+                        print(f'Failed to manually delete object {obj["Key"]}: {e}')
+            
+            if all_versions:
+                print(f'Warning: Bucket {bucket} still has {len(all_versions)} versioned objects after cleanup attempt {attempt + 1}')
+                # Delete versioned objects individually
+                for version in all_versions:
+                    try:
+                        client.delete_object(Bucket=bucket, Key=version['Key'], VersionId=version['VersionId'])
+                        print(f'Manually deleted remaining version: {version["Key"]} (version: {version["VersionId"]})')
+                    except Exception as e:
+                        print(f'Failed to manually delete version {version["Key"]}: {e}')
+                        
+        except ClientError as e:
+            print(f'Error during final cleanup check: {e}')
+            break
 
     client.delete_bucket(Bucket=bucket)
 
