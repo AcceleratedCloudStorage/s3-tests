@@ -1,0 +1,95 @@
+action: GLOB, msg: packaging
+cwd: /home/ec2-user/s3-tests
+cmd: /usr/bin/python3 setup.py sdist --formats=zip --dist-dir .tox/dist
+running sdist
+running egg_info
+writing s3tests.egg-info/PKG-INFO
+writing dependency_links to s3tests.egg-info/dependency_links.txt
+writing requirements to s3tests.egg-info/requires.txt
+writing top-level names to s3tests.egg-info/top_level.txt
+reading manifest file 's3tests.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 's3tests.egg-info/SOURCES.txt'
+running check
+warning: check: missing required meta-data: url
+
+creating s3tests-0.0.1
+creating s3tests-0.0.1/s3tests
+creating s3tests-0.0.1/s3tests.egg-info
+creating s3tests-0.0.1/s3tests/functional
+creating s3tests-0.0.1/s3tests_boto3
+creating s3tests-0.0.1/s3tests_boto3/functional
+copying files to s3tests-0.0.1...
+copying LICENSE -> s3tests-0.0.1
+copying README.rst -> s3tests-0.0.1
+copying setup.py -> s3tests-0.0.1
+copying s3tests/__init__.py -> s3tests-0.0.1/s3tests
+copying s3tests/common.py -> s3tests-0.0.1/s3tests
+copying s3tests.egg-info/PKG-INFO -> s3tests-0.0.1/s3tests.egg-info
+copying s3tests.egg-info/SOURCES.txt -> s3tests-0.0.1/s3tests.egg-info
+copying s3tests.egg-info/dependency_links.txt -> s3tests-0.0.1/s3tests.egg-info
+copying s3tests.egg-info/requires.txt -> s3tests-0.0.1/s3tests.egg-info
+copying s3tests.egg-info/top_level.txt -> s3tests-0.0.1/s3tests.egg-info
+copying s3tests/functional/__init__.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/policy.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/test_headers.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/test_s3.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/test_s3_website.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/test_utils.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests/functional/utils.py -> s3tests-0.0.1/s3tests/functional
+copying s3tests_boto3/__init__.py -> s3tests-0.0.1/s3tests_boto3
+copying s3tests_boto3/common.py -> s3tests-0.0.1/s3tests_boto3
+copying s3tests_boto3/functional/__init__.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/iam.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/policy.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/rgw_interactive.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_headers.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_iam.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_s3.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_s3select.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_sns.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_sts.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/test_utils.py -> s3tests-0.0.1/s3tests_boto3/functional
+copying s3tests_boto3/functional/utils.py -> s3tests-0.0.1/s3tests_boto3/functional
+Writing s3tests-0.0.1/setup.cfg
+creating '.tox/dist/s3tests-0.0.1.zip' and adding 's3tests-0.0.1' to it
+adding 's3tests-0.0.1'
+adding 's3tests-0.0.1/s3tests'
+adding 's3tests-0.0.1/s3tests.egg-info'
+adding 's3tests-0.0.1/s3tests_boto3'
+adding 's3tests-0.0.1/LICENSE'
+adding 's3tests-0.0.1/README.rst'
+adding 's3tests-0.0.1/setup.py'
+adding 's3tests-0.0.1/PKG-INFO'
+adding 's3tests-0.0.1/setup.cfg'
+adding 's3tests-0.0.1/s3tests/functional'
+adding 's3tests-0.0.1/s3tests/__init__.py'
+adding 's3tests-0.0.1/s3tests/common.py'
+adding 's3tests-0.0.1/s3tests/functional/__init__.py'
+adding 's3tests-0.0.1/s3tests/functional/policy.py'
+adding 's3tests-0.0.1/s3tests/functional/test_headers.py'
+adding 's3tests-0.0.1/s3tests/functional/test_s3.py'
+adding 's3tests-0.0.1/s3tests/functional/test_s3_website.py'
+adding 's3tests-0.0.1/s3tests/functional/test_utils.py'
+adding 's3tests-0.0.1/s3tests/functional/utils.py'
+adding 's3tests-0.0.1/s3tests.egg-info/PKG-INFO'
+adding 's3tests-0.0.1/s3tests.egg-info/SOURCES.txt'
+adding 's3tests-0.0.1/s3tests.egg-info/dependency_links.txt'
+adding 's3tests-0.0.1/s3tests.egg-info/requires.txt'
+adding 's3tests-0.0.1/s3tests.egg-info/top_level.txt'
+adding 's3tests-0.0.1/s3tests_boto3/functional'
+adding 's3tests-0.0.1/s3tests_boto3/__init__.py'
+adding 's3tests-0.0.1/s3tests_boto3/common.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/__init__.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/iam.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/policy.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/rgw_interactive.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_headers.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_iam.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_s3.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_s3select.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_sns.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_sts.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/test_utils.py'
+adding 's3tests-0.0.1/s3tests_boto3/functional/utils.py'
+removing 's3tests-0.0.1' (and everything under it)

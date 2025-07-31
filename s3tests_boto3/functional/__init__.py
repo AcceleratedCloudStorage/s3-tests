@@ -408,7 +408,7 @@ def get_cloud_config(cfg):
 
 def get_client(client_config=None):
     if client_config == None:
-        client_config = Config(signature_version='s3v4')
+        client_config = Config(signature_version='s3v4', s3={'addressing_style': 'virtual'})
 
     client = boto3.client(service_name='s3',
                         aws_access_key_id=config.main_access_key,
@@ -426,7 +426,7 @@ def get_v2_client():
                         endpoint_url=config.default_endpoint,
                         use_ssl=config.default_is_secure,
                         verify=config.default_ssl_verify,
-                        config=Config(signature_version='s3'))
+                        config=Config(signature_version='s3', s3={'addressing_style': 'virtual'}))
     return client
 
 def get_sts_client(**kwargs):
@@ -502,7 +502,7 @@ def get_iam_alt_root_client(**kwargs):
 
 def get_alt_client(client_config=None):
     if client_config == None:
-        client_config = Config(signature_version='s3v4')
+        client_config = Config(signature_version='s3v4', s3={'addressing_style': 'virtual'})
 
     client = boto3.client(service_name='s3',
                         aws_access_key_id=config.alt_access_key,
@@ -632,7 +632,8 @@ def get_new_bucket_resource(name=None):
                         aws_secret_access_key=config.main_secret_key,
                         endpoint_url=config.default_endpoint,
                         use_ssl=config.default_is_secure,
-                        verify=config.default_ssl_verify)
+                        verify=config.default_ssl_verify,
+                        config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
     if name is None:
         name = get_new_bucket_name()
     bucket = s3.Bucket(name)
