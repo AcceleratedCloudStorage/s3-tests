@@ -123,8 +123,11 @@ test-core: validate-config
 test-implemented: validate-config
 	@echo "$(GREEN)Running tests for your implemented S3 APIs...$(NC)"
 	@echo "$(YELLOW)Testing: ListBuckets, CreateBucket, HeadBucket, DeleteBucket$(NC)"
-	@echo "$(YELLOW)         ListObjects v1/v2, PutObject, GetObject, HeadObject$(NC)"
-	@echo "$(YELLOW)         DeleteObject, CopyObject, DeleteObjects$(NC)"
+	@echo "$(YELLOW)         ListObjects v1/v2 (prefix, delimiter, pagination)$(NC)"
+	@echo "$(YELLOW)         PutObject (metadata, chunked, conditional headers)$(NC)"
+	@echo "$(YELLOW)         GetObject (range, conditional headers)$(NC)"
+	@echo "$(YELLOW)         HeadObject (conditional headers)$(NC)"
+	@echo "$(YELLOW)         DeleteObject, CopyObject (metadata directives), DeleteObjects$(NC)"
 	$(PYTEST_CMD) $(TEST_FILE)::test_bucket_create_delete \
 		$(TEST_FILE)::test_buckets_create_then_list \
 		$(TEST_FILE)::test_bucket_head \
@@ -138,14 +141,36 @@ test-implemented: validate-config
 		$(TEST_FILE)::test_bucket_listv2_delimiter_basic \
 		$(TEST_FILE)::test_bucket_list_prefix_basic \
 		$(TEST_FILE)::test_bucket_listv2_prefix_basic \
+		$(TEST_FILE)::test_bucket_list_maxkeys_one \
+		$(TEST_FILE)::test_bucket_listv2_maxkeys_one \
+		$(TEST_FILE)::test_bucket_list_marker_none \
+		$(TEST_FILE)::test_bucket_listv2_continuationtoken \
 		$(TEST_FILE)::test_object_write_read_update_read_delete \
 		$(TEST_FILE)::test_object_write_with_chunked_transfer_encoding \
 		$(TEST_FILE)::test_object_metadata_replaced_on_put \
+		$(TEST_FILE)::test_object_set_get_metadata_none_to_good \
 		$(TEST_FILE)::test_object_put_authenticated \
 		$(TEST_FILE)::test_object_head_zero_bytes \
+		$(TEST_FILE)::test_ranged_request_response_code \
+		$(TEST_FILE)::test_ranged_request_skip_leading_bytes_response_code \
+		$(TEST_FILE)::test_ranged_request_return_trailing_bytes_response_code \
+		$(TEST_FILE)::test_get_object_ifmatch_good \
+		$(TEST_FILE)::test_get_object_ifmatch_failed \
+		$(TEST_FILE)::test_get_object_ifnonematch_good \
+		$(TEST_FILE)::test_get_object_ifnonematch_failed \
+		$(TEST_FILE)::test_get_object_ifmodifiedsince_good \
+		$(TEST_FILE)::test_get_object_ifunmodifiedsince_good \
+		$(TEST_FILE)::test_put_object_ifmatch_good \
+		$(TEST_FILE)::test_put_object_ifmatch_failed \
+		$(TEST_FILE)::test_put_object_ifnonmatch_good \
+		$(TEST_FILE)::test_put_object_ifnonmatch_failed \
 		$(TEST_FILE)::test_object_copy_same_bucket \
 		$(TEST_FILE)::test_object_copy_diff_bucket \
 		$(TEST_FILE)::test_object_copy_to_itself \
+		$(TEST_FILE)::test_object_copy_retaining_metadata \
+		$(TEST_FILE)::test_object_copy_replacing_metadata \
+		$(TEST_FILE)::test_copy_object_ifmatch_good \
+		$(TEST_FILE)::test_copy_object_ifmatch_failed \
 		$(TEST_FILE)::test_multi_object_delete \
 		$(PYTEST_ARGS)
 
