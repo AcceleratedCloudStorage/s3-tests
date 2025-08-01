@@ -85,15 +85,55 @@ def list_versions(client, bucket, batch_size):
     kwargs = {'Bucket': bucket, 'MaxKeys': batch_size}
     truncated = True
     while truncated:
-        listing = client.list_object_versions(**kwargs)
+        try:
+            listing = client.list_object_versions(**kwargs)
 
-        kwargs['KeyMarker'] = listing.get('NextKeyMarker')
-        kwargs['VersionIdMarker'] = listing.get('NextVersionIdMarker')
-        truncated = listing['IsTruncated']
+            # Only set markers if they are not None (boto3 validation requirement)
+            next_key_marker = listing.get('NextKeyMarker')
+            next_version_id_marker = listing.get('NextVersionIdMarker')
+            
+            if next_key_marker is not None:
+                kwargs['KeyMarker'] = next_key_marker
+            elif 'KeyMarker' in kwargs:
+                del kwargs['KeyMarker']
+                
+            if next_version_id_marker is not None:
+                kwargs['VersionIdMarker'] = next_version_id_marker
+            elif 'VersionIdMarker' in kwargs:
+                del kwargs['VersionIdMarker']
+                
+            truncated = listing['IsTruncated']
 
-        objs = listing.get('Versions', []) + listing.get('DeleteMarkers', [])
-        if len(objs):
-            yield [{'Key': o['Key'], 'VersionId': o['VersionId']} for o in objs]
+            objs = listing.get('Versions', []) + listing.get('DeleteMarkers', [])
+            if len(objs):
+                yield [{'Key': o['Key'], 'VersionId': o['VersionId']} for o in objs]
+        except ClientError as e:
+            # If ListObjectVersions is not supported, fall back to ListObjects
+            if e.response['Error']['Code'] in ['NotImplemented', 'MethodNotAllowed', 'NoSuchKey']:
+                print(f"ListObjectVersions not supported, falling back to ListObjects for bucket {bucket}")
+                # Fall back to regular list_objects for non-versioned buckets
+                fallback_kwargs = {'Bucket': bucket, 'MaxKeys': batch_size}
+                if 'KeyMarker' in kwargs:
+                    fallback_kwargs['Marker'] = kwargs['KeyMarker']
+                
+                try:
+                    listing = client.list_objects(**fallback_kwargs)
+                    truncated = listing.get('IsTruncated', False)
+                    
+                    if truncated and 'Contents' in listing and len(listing['Contents']) > 0:
+                        kwargs['KeyMarker'] = listing['Contents'][-1]['Key']
+                    else:
+                        truncated = False
+                    
+                    objs = listing.get('Contents', [])
+                    if len(objs):
+                        # For non-versioned objects, we don't include VersionId
+                        yield [{'Key': o['Key']} for o in objs]
+                except ClientError:
+                    # If both fail, the bucket might not exist or be empty
+                    break
+            else:
+                raise
 
 def nuke_bucket(client, bucket):
     batch_size = 128

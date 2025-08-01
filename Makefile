@@ -16,7 +16,7 @@
 # Configuration
 PYTEST_CMD = S3TEST_CONF=s3tests.conf tox --
 TEST_FILE = s3tests_boto3/functional/test_s3.py
-PYTEST_ARGS = --tb=line -v
+PYTEST_ARGS = --tb=line -v -m 'not fails_on_aws'
 
 # Color output
 GREEN = \033[0;32m
@@ -34,8 +34,10 @@ help:
 	@echo "$(YELLOW)Available test targets:$(NC)"
 	@echo "  $(GREEN)test-basic$(NC)         - Run basic functionality tests (quick smoke test)"
 	@echo "  $(GREEN)test-core$(NC)          - Run core functionality tests (guaranteed to work)"
-	@echo "  $(GREEN)test-all$(NC)           - Run all core supported API tests"
+	@echo "  $(GREEN)test-implemented$(NC)   - Run tests for YOUR implemented APIs only"
+	@echo "  $(GREEN)test-all$(NC)           - Run all core supported API tests (skips AWS-failing tests)"
 	@echo "  $(GREEN)test-comprehensive$(NC) - Run comprehensive tests (includes edge cases)"
+	@echo "  $(GREEN)test-all-raw$(NC)       - Run all tests including those that fail on AWS"
 	@echo "  $(GREEN)test-buckets$(NC)       - Run all bucket operation tests"
 	@echo "  $(GREEN)test-objects$(NC)       - Run all object operation tests"
 	@echo "  $(GREEN)test-list$(NC)          - Run list operations tests"
@@ -65,10 +67,16 @@ help:
 	@echo "  $(GREEN)test-cleanup$(NC)       - Test cleanup functionality"
 	@echo "  $(GREEN)validate-config$(NC)    - Validate test configuration"
 	@echo ""
-	@echo "$(YELLOW)Example:$(NC)"
-	@echo "  make test-basic"
-	@echo "  make test-buckets"
-	@echo "  make test-objects"
+	@echo "$(YELLOW)Notes:$(NC)"
+	@echo "  • By default, tests marked with @pytest.mark.fails_on_aws are skipped"
+	@echo "  • Use test-all-raw to run ALL tests including AWS-failing ones"
+	@echo "  • Use test-edge-cases to run only the problematic edge case tests"
+	@echo ""
+	@echo "$(YELLOW)Examples:$(NC)"
+	@echo "  make test-basic      # Quick smoke test"
+	@echo "  make test-implemented # Test YOUR specific implemented APIs"
+	@echo "  make test-all        # All supported APIs (filtered)"
+	@echo "  make test-all-raw    # All tests including problematic ones"
 
 # Validate configuration before running tests
 validate-config:
@@ -111,6 +119,36 @@ test-core: validate-config
 		$(TEST_FILE)::test_object_copy_same_bucket \
 		$(PYTEST_ARGS)
 
+# Tests specifically for your implemented APIs
+test-implemented: validate-config
+	@echo "$(GREEN)Running tests for your implemented S3 APIs...$(NC)"
+	@echo "$(YELLOW)Testing: ListBuckets, CreateBucket, HeadBucket, DeleteBucket$(NC)"
+	@echo "$(YELLOW)         ListObjects v1/v2, PutObject, GetObject, HeadObject$(NC)"
+	@echo "$(YELLOW)         DeleteObject, CopyObject, DeleteObjects$(NC)"
+	$(PYTEST_CMD) $(TEST_FILE)::test_bucket_create_delete \
+		$(TEST_FILE)::test_buckets_create_then_list \
+		$(TEST_FILE)::test_bucket_head \
+		$(TEST_FILE)::test_bucket_delete_notexist \
+		$(TEST_FILE)::test_bucket_delete_nonempty \
+		$(TEST_FILE)::test_bucket_list_empty \
+		$(TEST_FILE)::test_bucket_list_distinct \
+		$(TEST_FILE)::test_bucket_list_many \
+		$(TEST_FILE)::test_bucket_listv2_many \
+		$(TEST_FILE)::test_bucket_list_delimiter_basic \
+		$(TEST_FILE)::test_bucket_listv2_delimiter_basic \
+		$(TEST_FILE)::test_bucket_list_prefix_basic \
+		$(TEST_FILE)::test_bucket_listv2_prefix_basic \
+		$(TEST_FILE)::test_object_write_read_update_read_delete \
+		$(TEST_FILE)::test_object_write_with_chunked_transfer_encoding \
+		$(TEST_FILE)::test_object_metadata_replaced_on_put \
+		$(TEST_FILE)::test_object_put_authenticated \
+		$(TEST_FILE)::test_object_head_zero_bytes \
+		$(TEST_FILE)::test_object_copy_same_bucket \
+		$(TEST_FILE)::test_object_copy_diff_bucket \
+		$(TEST_FILE)::test_object_copy_to_itself \
+		$(TEST_FILE)::test_multi_object_delete \
+		$(PYTEST_ARGS)
+
 # Run all supported API tests (core functionality)
 test-all: validate-config
 	@echo "$(GREEN)Running all core S3 API tests...$(NC)"
@@ -122,6 +160,15 @@ test-all: validate-config
 # Run comprehensive tests (includes edge cases that may fail on some implementations)
 test-comprehensive: validate-config test-all test-auth test-naming test-edge-cases
 	@echo "$(GREEN)All comprehensive S3 API tests completed!$(NC)"
+
+# Run all tests including those that fail on AWS (no filtering)
+test-all-raw: validate-config
+	@echo "$(GREEN)Running all core S3 API tests (including AWS-failing tests)...$(NC)"
+	@echo "$(YELLOW)Warning: This includes tests that may fail on AWS-compatible implementations$(NC)"
+	@$(MAKE) test-buckets PYTEST_ARGS="--tb=line -v" || echo "$(YELLOW)Some bucket tests failed$(NC)"
+	@$(MAKE) test-objects PYTEST_ARGS="--tb=line -v" || echo "$(YELLOW)Some object tests failed$(NC)"
+	@$(MAKE) test-list PYTEST_ARGS="--tb=line -v" || echo "$(YELLOW)Some list tests failed$(NC)"
+	@echo "$(GREEN)All raw S3 API tests completed!$(NC)"
 
 # =============================================================================
 # BUCKET OPERATIONS TESTS
