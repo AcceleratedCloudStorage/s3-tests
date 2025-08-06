@@ -703,9 +703,10 @@ def get_new_bucket_name():
     bucket by this name happens to exist, it's ok if tests give
     false negatives.
     """
-    name = '{prefix}{num}'.format(
+    name = '{prefix}{num}{random}'.format(
         prefix=prefix,
         num=next(bucket_counter),
+        random=random.choice(string.ascii_lowercase + string.digits)
         )
     return name
 

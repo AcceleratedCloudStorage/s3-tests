@@ -24,7 +24,7 @@ YELLOW = \033[1;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
 
-.PHONY: help test-all test-buckets test-objects test-list test-basic test-auth test-naming test-cleanup
+.PHONY: help test-all test-buckets test-objects test-list test-basic test-auth test-naming test-cleanup test-multipart test-multipart-core test-multipart-debug
 
 # Default target
 help:
@@ -56,6 +56,9 @@ help:
 	@echo "  $(GREEN)test-object-head$(NC)   - Test object head operations"
 	@echo "  $(GREEN)test-object-delete$(NC) - Test object deletion"
 	@echo "  $(GREEN)test-object-copy$(NC)   - Test object copy operations"
+	@echo "  $(GREEN)test-multipart$(NC)     - Test multipart upload operations (comprehensive)"
+	@echo "  $(GREEN)test-multipart-core$(NC) - Test core multipart upload operations (essential)"
+	@echo "  $(GREEN)test-multipart-debug$(NC) - Test minimal multipart operations (debugging)"
 	@echo ""
 	@echo "$(YELLOW)List Operations:$(NC)"
 	@echo "  $(GREEN)test-list-objects-v1$(NC) - Test ListObjects v1"
@@ -128,6 +131,7 @@ test-implemented: validate-config
 	@echo "$(YELLOW)         GetObject (range, conditional headers)$(NC)"
 	@echo "$(YELLOW)         HeadObject (conditional headers)$(NC)"
 	@echo "$(YELLOW)         DeleteObject, CopyObject (metadata directives), DeleteObjects$(NC)"
+	@echo "$(YELLOW)         CreateMultipartUpload, UploadPart, CompleteMultipartUpload, AbortMultipartUpload$(NC)"
 	$(PYTEST_CMD) $(TEST_FILE)::test_bucket_create_delete \
 		$(TEST_FILE)::test_buckets_create_then_list \
 		$(TEST_FILE)::test_bucket_head \
@@ -172,6 +176,10 @@ test-implemented: validate-config
 		$(TEST_FILE)::test_copy_object_ifmatch_good \
 		$(TEST_FILE)::test_copy_object_ifmatch_failed \
 		$(TEST_FILE)::test_multi_object_delete \
+		$(TEST_FILE)::test_multipart_upload \
+		$(TEST_FILE)::test_multipart_upload_small \
+		$(TEST_FILE)::test_abort_multipart_upload \
+		$(TEST_FILE)::test_list_multipart_upload \
 		$(PYTEST_ARGS)
 
 # Run all supported API tests (core functionality)
@@ -240,7 +248,7 @@ test-bucket-list: validate-config
 # Based on supported operations: PutObject, GetObject, HeadObject, DeleteObject, CopyObject, DeleteObjects
 # =============================================================================
 
-test-objects: test-object-put test-object-get test-object-head test-object-delete test-object-copy
+test-objects: test-object-put test-object-get test-object-head test-object-delete test-object-copy test-multipart
 	@echo "$(GREEN)All object operation tests completed!$(NC)"
 
 # Object Upload Tests (PutObject)
@@ -304,6 +312,67 @@ test-object-copy: validate-config
 		$(TEST_FILE)::test_object_copy_replacing_metadata \
 		$(TEST_FILE)::test_object_copy_bucket_not_found \
 		$(TEST_FILE)::test_object_copy_key_not_found \
+		$(PYTEST_ARGS)
+
+# Multipart Upload Tests (CreateMultipartUpload, UploadPart, CompleteMultipartUpload, AbortMultipartUpload, ListParts)
+test-multipart: validate-config
+	@echo "$(GREEN)Running multipart upload operation tests...$(NC)"
+	@echo "$(YELLOW)Testing: CreateMultipartUpload, UploadPart, CompleteMultipartUpload, AbortMultipartUpload, ListMultipartUploads$(NC)"
+	$(PYTEST_CMD) $(TEST_FILE)::test_multipart_upload \
+		$(TEST_FILE)::test_multipart_upload_small \
+		$(TEST_FILE)::test_multipart_upload_empty \
+		$(TEST_FILE)::test_multipart_upload_contents \
+		$(TEST_FILE)::test_multipart_upload_overwrite_existing_object \
+		$(TEST_FILE)::test_multipart_upload_resend_part \
+		$(TEST_FILE)::test_multipart_upload_multiple_sizes \
+		$(TEST_FILE)::test_multipart_upload_size_too_small \
+		$(TEST_FILE)::test_multipart_upload_missing_part \
+		$(TEST_FILE)::test_multipart_upload_incorrect_etag \
+		$(TEST_FILE)::test_abort_multipart_upload \
+		$(TEST_FILE)::test_abort_multipart_upload_not_found \
+		$(TEST_FILE)::test_list_multipart_upload \
+		$(TEST_FILE)::test_list_multipart_upload_owner \
+		$(TEST_FILE)::test_multipart_copy_small \
+		$(TEST_FILE)::test_multipart_copy_invalid_range \
+		$(TEST_FILE)::test_multipart_copy_improper_range \
+		$(TEST_FILE)::test_multipart_copy_without_range \
+		$(TEST_FILE)::test_multipart_copy_special_names \
+		$(TEST_FILE)::test_multipart_copy_multiple_sizes \
+		$(TEST_FILE)::test_multipart_copy_versioned \
+		$(TEST_FILE)::test_multipart_get_part \
+		$(TEST_FILE)::test_multipart_single_get_part \
+		$(TEST_FILE)::test_non_multipart_get_part \
+		$(TEST_FILE)::test_atomic_multipart_upload_write \
+		$(TEST_FILE)::test_multipart_resend_first_finishes_last \
+		$(TEST_FILE)::test_object_copy_versioning_multipart_upload \
+		$(TEST_FILE)::test_versioning_obj_create_overwrite_multipart \
+		$(TEST_FILE)::test_versioning_bucket_multipart_upload_return_version_id \
+		$(TEST_FILE)::test_lifecycle_set_multipart \
+		$(TEST_FILE)::test_lifecycle_multipart_expiration \
+		$(TEST_FILE)::test_set_multipart_tagging \
+		$(TEST_FILE)::test_bucket_policy_multipart \
+		$(TEST_FILE)::test_multipart_upload_on_a_bucket_with_policy \
+		$(PYTEST_ARGS)
+
+# Core Multipart Upload Tests (essential operations only)
+test-multipart-core: validate-config
+	@echo "$(GREEN)Running core multipart upload tests...$(NC)"
+	@echo "$(YELLOW)Testing essential multipart operations: CreateMultipartUpload, UploadPart, CompleteMultipartUpload, AbortMultipartUpload$(NC)"
+	$(PYTEST_CMD) $(TEST_FILE)::test_multipart_upload \
+		$(TEST_FILE)::test_multipart_upload_small \
+		$(TEST_FILE)::test_abort_multipart_upload \
+		$(TEST_FILE)::test_list_multipart_upload \
+		$(TEST_FILE)::test_multipart_upload_contents \
+		$(TEST_FILE)::test_multipart_upload_size_too_small \
+		$(TEST_FILE)::test_multipart_upload_missing_part \
+		$(PYTEST_ARGS)
+
+# Debug Multipart Upload Tests (minimal test for debugging ETag issues)
+test-multipart-debug: validate-config
+	@echo "$(GREEN)Running debug multipart upload tests...$(NC)"
+	@echo "$(YELLOW)Testing minimal multipart operations for debugging$(NC)"
+	$(PYTEST_CMD) $(TEST_FILE)::test_multipart_upload_small \
+		$(TEST_FILE)::test_abort_multipart_upload \
 		$(PYTEST_ARGS)
 
 # =============================================================================
@@ -522,6 +591,13 @@ show-supported-ops:
 	@echo "  • DeleteObject (virtual-style)"
 	@echo "  • CopyObject (virtual-style)"
 	@echo "  • DeleteObjects (virtual-style, batch)"
+	@echo ""
+	@echo "$(YELLOW)Multipart Upload Operations:$(NC)"
+	@echo "  • CreateMultipartUpload (virtual-style)"
+	@echo "  • UploadPart (virtual-style)"
+	@echo "  • CompleteMultipartUpload (virtual-style)"
+	@echo "  • AbortMultipartUpload (virtual-style)"
+	@echo "  • ListMultipartUploads (virtual-style)"
 	@echo ""
 	@echo "$(YELLOW)Endpoint Style:$(NC)"
 	@echo "  • Virtual-hosted style: bucket.localhost:8000/object"
